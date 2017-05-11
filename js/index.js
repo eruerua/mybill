@@ -14,7 +14,6 @@
 	    var ref;
 	    var flag = false;
 
-
 	    $(".register").click(function() {
 	        register();
 	    });
@@ -24,7 +23,7 @@
 	    });
 	    //替换成自己的邮箱和密码 完成首次注册后 就可以登录了 
 	    function register() {
-	        wilddog.auth().createUserWithEmailAndPassword("**********@qq.com", "*******").then(function(user) {
+	        wilddog.auth().createUserWithEmailAndPassword("11111@qq.com", "111111").then(function(user) {
 	            // 获取用户
 	            console.log(user);
 	        }).catch(function(error) {
@@ -34,28 +33,24 @@
 	    }
 
 	    function login() {
-	        wilddog.auth().signInWithEmailAndPassword("**********@qq.com", "*******").then(function(res) {
+	        wilddog.auth().signInWithEmailAndPassword("11111@qq.com", "111111").then(function(res) {
 	            console.log(res);
 	            uid = wilddog.auth().currentUser.uid;
 	            ref = wilddog.sync().ref("users/" + uid);
 	            flag = true;
-
-
-	            
-
 	        }).catch(function(error) {
 	            // 错误处理
 	            console.log(error);
 	        });
 	    }
 
-
 	    $(".s_date").keypress(function(event) {
 	        if (event.keyCode == "13") {
 	            console.log(uid);
 	            day = $(".s_date").val();
-
-	            
+	            if (bill !== {}) {
+	                bill = {};
+	            }
 	            ref.child(day).on('value', function(snapshot) {
 	                total = 0;
 	                $('.bill_show').empty();
@@ -63,30 +58,32 @@
 	                var items = snapshot.val();
 	                for (var item in items) {
 	                    var name = item;
-	                    var price = items[item];
-	                    var list = name + " " + price + "元";
-	                    var textObj = $('<div class="bill_message"' + 'id = ' + name + '>');
-	                    textObj.text(list);
-	                    $(".bill_show").append(textObj);
-	                    total += Number(price);
+	                    if (name !== "总计") {
+	                        var price = items[item];
+	                        var list = name + " " + price + "元";
+	                        var textObj = $('<div class="bill_message"' + 'id = ' + name + '>');
+	                        textObj.text(list);
+	                        $(".bill_show").append(textObj);
+	                        total += Number(price);
+	                    }
 	                }
-	                $(".bill_message").click(function() {
+	                $(".bill_message").dblclick(function() {
 	                    var name = $(this).attr("id");
 	                    console.log("delete" + name);
 	                    ref.child(day).child(name).remove();
+	                    updateTotal();
 	                });
 	                $(".total").text("");
 	                $(".total").text("总计 " + total + "元");
 	            });
+	            updateTotal();
 	        }
-
-
 	    });
 
 	    $(".s_sub").click(function() {
-	    	if (bill !== {}) {
-	    	    bill = {};
-	    	}
+	        if (bill !== {}) {
+	            bill = {};
+	        }
 	        var item = $(".s_item").val();
 	        var price = $(".s_price").val();
 	        if (item && price) {
@@ -94,11 +91,9 @@
 	            ref.child(day).update(bill);
 	            $(".s_item").val('');
 	            $(".s_price").val('');
-
 	        }
-
+	        updateTotal();
 	    });
-	    
 
 	    $(".s_del").click(function() {
 	        arr = [];
@@ -107,6 +102,18 @@
 	        ref.child(day).remove();
 	    });
 
-
-
+	    function updateTotal() {
+	        ref.child(day).once('value', function(snapshot) {
+	            total = 0;
+	            var items = snapshot.val();
+	            for (var item in items) {
+	                var name = item;
+	                if (name !== "总计") {
+	                    var price = items[item];
+	                    total += Number(price);
+	                }
+	            }
+	            ref.child(day).update({ 总计: total });
+	        });
+	    }
 	});
